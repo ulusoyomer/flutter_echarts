@@ -27,7 +27,9 @@ class Echarts extends StatefulWidget {
       this.captureVerticalGestures = false,
       this.onLoad,
       this.onWebResourceError,
-      this.reloadAfterInit = false})
+      this.reloadAfterInit = false,
+      this.renderer = 'svg'
+      })
       : super(key: key);
 
   final String option;
@@ -39,6 +41,8 @@ class Echarts extends StatefulWidget {
   final List<String> extensions;
 
   final String? theme;
+
+  final String renderer;
 
   final bool captureAllGestures;
 
@@ -99,7 +103,7 @@ class _EchartsState extends State<Echarts> {
     await _controller?.runJavaScript('''
       $echartsScript
       $extensionsStr
-      var chart = echarts.init(document.getElementById('chart'), $themeStr);
+      var chart = echarts.init(document.getElementById('chart'), $themeStr, {renderer: '${this.widget.renderer}'});
       ${this.widget.extraScript}
       chart.setOption($_currentOption, true);
     ''');
