@@ -91,7 +91,7 @@ class EchartsState extends State<Echarts> {
           },
           onWebResourceError: (WebResourceError error) {
             if (widget.onWebResourceError != null) {
-              widget.onWebResourceError!(_controller, Exception(error));
+              widget.onWebResourceError?.call(_controller, Exception(error));
             }
           },
         ),
@@ -100,7 +100,7 @@ class EchartsState extends State<Echarts> {
         'Messager',
         onMessageReceived: (JavaScriptMessage message) {
           if (widget.onMessage != null) {
-            widget.onMessage!(message.message);
+            widget.onMessage?.call(message.message);
           }
         },
       )
@@ -125,7 +125,7 @@ class EchartsState extends State<Echarts> {
       chart.setOption($_currentOption, true);
     ''');
     if (widget.onLoad != null) {
-      widget.onLoad!(_controller);
+      widget.onLoad?.call(_controller);
     }
   }
 
