@@ -1,36 +1,37 @@
-library flutter_echarts;
-
 import 'dart:convert';
 
-import 'package:flutter/widgets.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_echarts/echarts_script.dart' show echartsScript;
 import 'package:webview_flutter/webview_flutter.dart';
 
-import 'echarts_script.dart' show echartsScript;
 
-/// <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, target-densitydpi=device-dpi" /><style type="text/css">body,html,#chart{height: 100%;width: 100%;margin: 0px;}div {-webkit-tap-highlight-color:rgba(255,255,255,0);}</style></head><body><div id="chart" /></body></html>
+
+
+/// <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0" /><style type="text/css">body,html,#chart{height: 100%;width: 100%;margin: 0px;}div {-webkit-tap-highlight-color:rgba(255,255,255,0);}</style></head><body><div id="chart" /></body></html>
 /// 'data:text/html;base64,' + base64Encode(const Utf8Encoder().convert( /* STRING ABOVE */ ))
+
 const htmlBase64 =
-    'PCFET0NUWVBFIGh0bWw+PGh0bWw+PGhlYWQ+PG1ldGEgY2hhcnNldD0idXRmLTgiPjxtZXRhIG5hbWU9InZpZXdwb3J0IiBjb250ZW50PSJ3aWR0aD1kZXZpY2Utd2lkdGgsIGluaXRpYWwtc2NhbGU9MS4wLCBtYXhpbXVtLXNjYWxlPTEuMCwgbWluaW11bS1zY2FsZT0xLjAsIHVzZXItc2NhbGFibGU9MCwgdGFyZ2V0LWRlbnNpdHlkcGk9ZGV2aWNlLWRwaSIgLz48c3R5bGUgdHlwZT0idGV4dC9jc3MiPmJvZHksaHRtbCwjY2hhcnR7aGVpZ2h0OiAxMDAlO3dpZHRoOiAxMDAlO21hcmdpbjogMHB4O31kaXYgey13ZWJraXQtdGFwLWhpZ2hsaWdodC1jb2xvcjpyZ2JhKDI1NSwyNTUsMjU1LDApO308L3N0eWxlPjwvaGVhZD48Ym9keT48ZGl2IGlkPSJjaGFydCIgLz48L2JvZHk+PC9odG1sPg==';
+    'PCFET0NUWVBFIGh0bWw+PGh0bWw+PGhlYWQ+PG1ldGEgY2hhcnNldD0idXRmLTgiPjxtZXRhIG5hbWU9InZpZXdwb3J0IiBjb250ZW50PSJ3aWR0aD1kZXZpY2Utd2lkdGgsIGluaXRpYWwtc2NhbGU9MS4wLCBtYXhpbXVtLXNjYWxlPTEuMCwgbWluaW11bS1zY2FsZT0xLjAsIHVzZXItc2NhbGFibGU9MCIgLz48c3R5bGUgdHlwZT0idGV4dC9jc3MiPmJvZHksaHRtbCwjY2hhcnR7aGVpZ2h0OiAxMDAlO3dpZHRoOiAxMDAlO21hcmdpbjogMHB4O31kaXYgey13ZWJraXQtdGFwLWhpZ2hsaWdodC1jb2xvcjpyZ2JhKDI1NSwyNTUsMjU1LDApO308L3N0eWxlPjwvaGVhZD48Ym9keT48ZGl2IGlkPSJjaGFydCIgLz48L2JvZHk+PC9odG1sPg==';
 
 class Echarts extends StatefulWidget {
-  Echarts(
-      {Key? key,
-      required this.option,
-      this.extraScript = '',
-      this.onMessage,
-      this.extensions = const [],
-      this.theme,
-      this.captureAllGestures = false,
-      this.captureHorizontalGestures = false,
-      this.captureVerticalGestures = false,
-      this.onLoad,
-      this.onWebResourceError,
-      this.reloadAfterInit = false,
-      this.renderer = 'svg'
-      })
-      : super(key: key);
+  const Echarts({
+    required this.option,
+    Key? key,
+    this.extraScript = '',
+    this.onMessage,
+    this.extensions = const [],
+    this.theme,
+    this.captureAllGestures = false,
+    this.captureHorizontalGestures = false,
+    this.captureVerticalGestures = false,
+    this.onLoad,
+    this.onWebResourceError,
+    this.reloadAfterInit = false,
+    this.renderer = 'svg',
+    this.loader,
+  }) : super(key: key);
 
   final String option;
 
@@ -56,14 +57,16 @@ class Echarts extends StatefulWidget {
 
   final bool reloadAfterInit;
 
+  final Widget? loader;
+
   @override
-  _EchartsState createState() => _EchartsState();
+  EchartsState createState() => EchartsState();
 }
 
-class _EchartsState extends State<Echarts> {
-  WebViewController? _controller;
-
+class EchartsState extends State<Echarts> {
+  late final WebViewController _controller;
   String? _currentOption;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -71,76 +74,84 @@ class _EchartsState extends State<Echarts> {
     _currentOption = widget.option;
 
     _controller = WebViewController()
-      ..setBackgroundColor(Color(0x00000000))
-      ..loadHtmlString(utf8.fuse(base64).decode(htmlBase64))
+      ..setBackgroundColor(const Color(0x00000000))
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageFinished: (url) => init(),
-          onWebResourceError: (e) {
+          onPageStarted: (String url) {
+            setState(() {
+              _isLoading = true;
+            });
+          },
+          onPageFinished: (String url) async {
+            await init();
+            setState(() {
+              _isLoading = false;
+            });
+          },
+          onWebResourceError: (WebResourceError error) {
             if (widget.onWebResourceError != null) {
-              widget.onWebResourceError!(_controller!, Exception(e));
+              widget.onWebResourceError!(_controller, Exception(error));
             }
           },
         ),
       )
-      ..addJavaScriptChannel('Messager', onMessageReceived: (JavaScriptMessage javascriptMessage) {
-        if (widget.onMessage != null) {
-          widget.onMessage!(javascriptMessage.message);
-        }
-      });
+      ..addJavaScriptChannel(
+        'Messager',
+        onMessageReceived: (JavaScriptMessage message) {
+          if (widget.onMessage != null) {
+            widget.onMessage!(message.message);
+          }
+        },
+      )
+      ..loadHtmlString(utf8.fuse(base64).decode(htmlBase64));
 
     if (widget.reloadAfterInit) {
-      new Future.delayed(const Duration(milliseconds: 100), () {
-        _controller?.reload();
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _controller.reload();
       });
     }
   }
 
-  void init() async {
-    final extensionsStr = this.widget.extensions.length > 0 ? this.widget.extensions.reduce((value, element) => value + '\n' + element) : '';
-    final themeStr = this.widget.theme != null ? '\'${this.widget.theme}\'' : 'null';
-    await _controller?.runJavaScript('''
+  Future<void> init() async {
+    final extensionsStr =
+        widget.extensions.isNotEmpty ? widget.extensions.join('\n') : '';
+    final themeStr = widget.theme != null ? "'${widget.theme}'" : 'null';
+    await _controller.runJavaScript('''
       $echartsScript
       $extensionsStr
-      var chart = echarts.init(document.getElementById('chart'), $themeStr, {renderer: '${this.widget.renderer}'});
-      ${this.widget.extraScript}
+      var chart = echarts.init(document.getElementById('chart'), $themeStr, {renderer: '${widget.renderer}'});
+      ${widget.extraScript}
       chart.setOption($_currentOption, true);
     ''');
     if (widget.onLoad != null) {
-      widget.onLoad!(_controller!);
+      widget.onLoad!(_controller);
     }
   }
 
   Set<Factory<OneSequenceGestureRecognizer>> getGestureRecognizers() {
-    Set<Factory<OneSequenceGestureRecognizer>> set = Set();
-    if (this.widget.captureAllGestures || this.widget.captureHorizontalGestures) {
-      set.add(Factory<HorizontalDragGestureRecognizer>(() {
-        return HorizontalDragGestureRecognizer()
-          ..onStart = (DragStartDetails details) {}
-          ..onUpdate = (DragUpdateDetails details) {}
-          ..onDown = (DragDownDetails details) {}
-          ..onCancel = () {}
-          ..onEnd = (DragEndDetails details) {};
-      }));
+    final gestures = <Factory<OneSequenceGestureRecognizer>>{};
+    if (widget.captureAllGestures || widget.captureHorizontalGestures) {
+      gestures.add(
+        Factory<HorizontalDragGestureRecognizer>(
+          () => HorizontalDragGestureRecognizer(),
+        ),
+      );
     }
-    if (this.widget.captureAllGestures || this.widget.captureVerticalGestures) {
-      set.add(Factory<VerticalDragGestureRecognizer>(() {
-        return VerticalDragGestureRecognizer()
-          ..onStart = (DragStartDetails details) {}
-          ..onUpdate = (DragUpdateDetails details) {}
-          ..onDown = (DragDownDetails details) {}
-          ..onCancel = () {}
-          ..onEnd = (DragEndDetails details) {};
-      }));
+    if (widget.captureAllGestures || widget.captureVerticalGestures) {
+      gestures.add(
+        Factory<VerticalDragGestureRecognizer>(
+          () => VerticalDragGestureRecognizer(),
+        ),
+      );
     }
-    return set;
+    return gestures;
   }
 
-  void update(String preOption) async {
+  Future<void> update(String previousOption) async {
     _currentOption = widget.option;
-    if (_currentOption != preOption) {
-      await _controller?.runJavaScript('''
+    if (_currentOption != previousOption) {
+      await _controller.runJavaScript('''
         try {
           chart.setOption($_currentOption, true);
         } catch(e) {
@@ -150,21 +161,28 @@ class _EchartsState extends State<Echarts> {
   }
 
   @override
-  void didUpdateWidget(Echarts oldWidget) {
+  void didUpdateWidget(covariant Echarts oldWidget) {
     super.didUpdateWidget(oldWidget);
     update(oldWidget.option);
   }
 
   @override
   void dispose() {
-    _controller?.clearCache();
+    _controller.clearCache();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return WebViewWidget(
-        controller: _controller!,
-        gestureRecognizers: getGestureRecognizers());
+    return Stack(
+      children: [
+        WebViewWidget(
+          controller: _controller,
+          gestureRecognizers: getGestureRecognizers(),
+        ),
+        if (widget.loader != null && _isLoading)
+          Positioned.fill(child: widget.loader!),
+      ],
+    );
   }
 }

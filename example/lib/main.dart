@@ -216,18 +216,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       }
                     });
                   ''',
-                  onMessage: (String message) {
-                    // Map<String, Object> messageAction = jsonDecode(message);
-                    // print(messageAction);
-                    // if (messageAction['type'] == 'select') {
-                    //   final item = _data1[messageAction['payload']];
-                    //   _scaffoldKey.currentState.showSnackBar(
-                    //     SnackBar(
-                    //       content: Text(item['name'].toString() + ': ' + display(item['value'])),
-                    //       duration: Duration(seconds: 2),
-                    //     ));
-                    // }
-                  },
                 ),
                 width: 300,
                 height: 250,
