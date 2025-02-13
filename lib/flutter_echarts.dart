@@ -115,7 +115,7 @@ class EchartsState extends State<Echarts> {
 
   Future<void> init() async {
     final extensionsStr =
-        widget.extensions.isNotEmpty ? widget.extensions.join('\n') : '';
+    widget.extensions.isNotEmpty ? widget.extensions.join('\n') : '';
     final themeStr = widget.theme != null ? "'${widget.theme}'" : 'null';
     await _controller.runJavaScript('''
       $echartsScript
@@ -134,14 +134,14 @@ class EchartsState extends State<Echarts> {
     if (widget.captureAllGestures || widget.captureHorizontalGestures) {
       gestures.add(
         Factory<HorizontalDragGestureRecognizer>(
-          () => HorizontalDragGestureRecognizer(),
+              () => HorizontalDragGestureRecognizer(),
         ),
       );
     }
     if (widget.captureAllGestures || widget.captureVerticalGestures) {
       gestures.add(
         Factory<VerticalDragGestureRecognizer>(
-          () => VerticalDragGestureRecognizer(),
+              () => VerticalDragGestureRecognizer(),
         ),
       );
     }
