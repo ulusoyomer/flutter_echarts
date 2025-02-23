@@ -18,7 +18,6 @@ const htmlBase64 =
 class Echarts extends StatefulWidget {
   const Echarts({
     required this.option,
-    Key? key,
     this.extraScript = '',
     this.onMessage,
     this.extensions = const [],
@@ -31,6 +30,8 @@ class Echarts extends StatefulWidget {
     this.reloadAfterInit = false,
     this.renderer = 'svg',
     this.loader,
+    this.webViewKey,
+    Key? key,
   }) : super(key: key);
 
   final String option;
@@ -58,6 +59,7 @@ class Echarts extends StatefulWidget {
   final bool reloadAfterInit;
 
   final Widget? loader;
+  final Key? webViewKey;
 
   @override
   EchartsState createState() => EchartsState();
@@ -177,6 +179,7 @@ class EchartsState extends State<Echarts> {
     return Stack(
       children: [
         WebViewWidget(
+          key: widget.webViewKey,
           controller: _controller,
           gestureRecognizers: getGestureRecognizers(),
         ),
